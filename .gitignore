@@ -1,0 +1,15 @@
+# Fine-tuned encoder weights — too large for git (~1.2 GB each)
+# Obtain via: python scripts/setup_encoders.py --source /path/to/models-final
+models/*/contrastive_model_encoder/
+models/*/prototype_model_encoder/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# OS
+.DS_Store
