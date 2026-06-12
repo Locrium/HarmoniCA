@@ -54,11 +54,26 @@ Clinicians and researchers assigned items to dimensions through a structured sur
 
 The best performing model for each construct was fine-tuned with the probability distribution of the expert mappings using contrastive learning.
 
+## Results
+
+Cross validation results:
+
+| Construct| Folds | Mean accuracy| SD |
+|-----------|----------|-----------|----------|
+| Depression | 14 | 86.9% | ±11.9% |
+| Anxiety | 13 | 93.7% | ±10.7% |
+| Sleep | 17 | 93.4% | ±12.1% |
+| Apathy | 11 | 77.9% | ±25.0% |
+
+## Final models
+
+All fine-tuned models can be found on [Huggingface](https://hf.co/collections/julia-pfarr/harmonica)
+
 ## Questionnaires mapped by experts
 
 | Abbreviation | Full Name | Construct |
 |---|---|---|
-| BDI | Beck's Depression Inventory I | Depression |
+| BDI-I | Beck's Depression Inventory I | Depression |
 | HDRS/HAM-D | Hamilton Depression Rating Scale | Depression |
 | GDS | Geriatric Depression Scale | Depression |
 | MADRS | Montgomery-Åsberg Depression Rating Scale | Depression |
@@ -105,18 +120,3 @@ The best performing model for each construct was fine-tuned with the probability
 | MDS-UPDRS I | Unified Parkinson's Disease Rating Scale - Part I | Multi-category |
 | NMSS | Non-Motor Symptoms Scale for Parkinson's Disease | Multi-category | 
 | NMSQuest | Non-Motor Symptoms Questionnaire | Multi-category |
-
-## Results
-
-Cross validation results:
-
-| Construct| Folds | Mean accuracy| SD |
-|-----------|----------|-----------|----------|
-| Depression | 14 | 86.9% | ±11.9% |
-| Anxiety | 13 | 93.7% | ±10.7% |
-| Sleep | 17 | 93.4% | ±12.1% |
-| Apathy | 11 | 77.9% | ±25.0% |
-
-## Final models
-
-All fine-tuned models can be found on [Huggingface](https://hf.co/collections/julia-pfarr/harmonica)
