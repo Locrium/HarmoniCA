@@ -14,6 +14,31 @@ This tool offers mapping of individual questionnaire items from multiple instrum
 
 Symptom dimensions were chosen based on the convergence of evidence across original scale publications, validation studies, expert recommendations, diagnostic manuals, and neuroimaging applications, along with practical considerations regarding dimension homogeneity and sample characteristics. Clinicians and researchers assigned items to dimensions through a structured survey. Through semantic similarity analysis using different embedding models and computation of embeddings for both questionnaire items and dimension descriptions, the best performing embedding model for each construct was chosen based on maximum cosine similarity between item and to dimension description embeddings (mirroring the expert task). The best performing model for each construct was fine-tuned with the probability distribution of the expert mappings using contrastive learning.
 
+## Available Questionnaires
+
+| Abbreviation | Full Name | Construct |
+|---|---|---|
+| MADRS | Montgomery-Åsberg Depression Rating Scale | Depression |
+| PHQ-9 | Patient Health Questionnaire-9 | Depression |
+| SDS | Zung Self-Rating Depression Scale | Depression |
+| DSI | Depressive Symptom Inventory | Depression |
+| MFQ | Mood and Feelings Questionnaire | Depression |
+| GAD-7 | Generalized Anxiety Disorder Scale | Anxiety |
+| PSWQ | Penn State Worry Questionnaire | Anxiety |
+| SMGAD | Severity Measure for Generalized Anxiety Disorder | Anxiety |
+| ASensI | Anxiety Sensitivity Index | Anxiety |
+| DAS | Dimensional Apathy Scale | Apathy |
+| SHAPS | Snaith-Hamilton Pleasure Scales | Apathy |
+| TEPS | Temporal Experience of Pleasure Scale | Apathy |
+| QUIP-C | Questionnaire for Impulsive-Compulsive Disorders in Parkinson's Disease | Impulse Control Disorders |
+| AIS | Athens Insomnia Scale | Sleep |
+| MSQ | Mayo Sleep Questionnaire | Sleep |
+| SDQ | Sleep Disorders Questionnaire | Sleep |
+| CAPE-P15 | Community Assessment of Psychic Experiences, Positive scale, 15-item version | Psychosis |
+| PQ-B | Prodromal Questionnaire, Brief version | Psychosis |
+| SCL-90 | Symptom Checklist-90 | Multi-category |
+| ASBPD | Ardouin Scale of Behavior in Parkinson's Disease | Multi-category |
+
 ## Results
 
 Cross validation results:
