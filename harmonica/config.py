@@ -109,12 +109,12 @@ DIMENSION_DESCRIPTIONS = {
 # Fill in your repo IDs after creating the repos on HuggingFace Hub.
 # Format: 'your-org/harmonica-{construct}'
 HF_REPOS = {
-    'depression':     None,  # e.g. 'your-org/harmonica-depression'
-    'apathy':         None,
-    'psychosis':      None,
-    'anxiety':        None,
-    'sleep':          None,
-    'impulse_control':None,
+    'depression':     "julia-pfarr/HarmoniCA_depression",  # e.g. 'your-org/harmonica-depression'
+    'apathy':         "julia-pfarr/HarmoniCA_apathy",
+    'psychosis':      "julia-pfarr/HarmoniCA_psychosis",
+    'anxiety':        "julia-pfarr/HarmoniCA_anxiety",
+    'sleep':          "julia-pfarr/HarmoniCA_sleep",
+    'impulse_control':"julia-pfarr/HarmoniCA_impulse-control",
 }
 
 # Best model type per construct (validated against round-2 expert survey)

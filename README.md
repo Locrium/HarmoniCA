@@ -10,9 +10,49 @@ This tool offers mapping of individual questionnaire items from multiple instrum
 
 ![img](docs/image.png)
 
-## Research
+## How to use
 
-Symptom dimensions were chosen based on the convergence of evidence across original scale publications, validation studies, expert recommendations, diagnostic manuals, and neuroimaging applications, along with practical considerations regarding dimension homogeneity and sample characteristics. Clinicians and researchers assigned items to dimensions through a structured survey. Through semantic similarity analysis using different embedding models and computation of embeddings for both questionnaire items and dimension descriptions, the best performing embedding model for each construct was chosen based on maximum cosine similarity between item and to dimension description embeddings (mirroring the expert task). The best performing model for each construct was fine-tuned with the probability distribution of the expert mappings using contrastive learning.
+
+**Step 1:** Clone this repo: 
+
+`git clone git@github.com:julia-pfarr/HarmoniCA.git`
+
+**Step 2:** Install requirements:
+
+`python -m venv /your-path/harmonica`
+`pip install -r requirements.txt` 
+
+**Step 3:** Run harmonization:
+
+``` 
+python harmonize.py -i <items.csv> 
+``` 
+
+Your `items.csv` needs to look like this:
+```
+construct,questionnaire,item_id,item_text
+depression,CES-D,CES-D_01,I was bothered by things that usually don’t bother me.
+depression,CES-D,CES-D_02,I did not feel like eating; my appetite was poor.
+anxiety,DASS,DASS_02,I was aware of dryness of my mouth.,
+anxiety,DASS,DASS_04,"I experienced breathing difficulty",
+...
+``` 
+
+Models for each construct are pulled from [Huggingface](https://hf.co/collections/julia-pfarr/harmonica) during the harmonization process, so make sure to have an internet connection and enough local space (~1.5GB per model/construct).
+
+**Step 4:** Open a PR to contribute new harmonized questionnaires
+
+The `harmonized_inventory.csv` get's updated automatically. We appreciate a Pull Request on this repo with your updated `harmonized_inventory.csv` so that we can have an ever growing inventory! :-) 
+
+You can try everything first with the `test-items.csv` from this repo!
+
+## The research behind this tool
+
+Symptom dimensions were chosen based on the convergence of evidence across original scale publications, validation studies, expert recommendations, diagnostic manuals, and neuroimaging applications, along with practical considerations regarding dimension homogeneity and sample characteristics (see our [OSF project](https://osf.io/caxzb/overview) for the full literature review and consensus pipeline).
+
+Clinicians and researchers assigned items to dimensions through a structured survey. Through semantic similarity analysis using different embedding models and computation of embeddings for both questionnaire items and dimension descriptions, the best performing embedding model for each construct was chosen (maximum cosine similarity between item and to dimension description embedding). 
+
+The best performing model for each construct was fine-tuned with the probability distribution of the expert mappings using contrastive learning.
 
 ## Results
 
