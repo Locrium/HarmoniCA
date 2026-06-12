@@ -54,6 +54,31 @@ Clinicians and researchers assigned items to dimensions through a structured sur
 
 The best performing model for each construct was fine-tuned with the probability distribution of the expert mappings using contrastive learning.
 
+## Available Questionnaires
+
+| Abbreviation | Full Name | Construct |
+|---|---|---|
+| MADRS | Montgomery-Åsberg Depression Rating Scale | Depression |
+| PHQ-9 | Patient Health Questionnaire-9 | Depression |
+| SDS | Zung Self-Rating Depression Scale | Depression |
+| DSI | Depressive Symptom Inventory | Depression |
+| MFQ | Mood and Feelings Questionnaire | Depression |
+| GAD-7 | Generalized Anxiety Disorder Scale | Anxiety |
+| PSWQ | Penn State Worry Questionnaire | Anxiety |
+| SMGAD | Severity Measure for Generalized Anxiety Disorder | Anxiety |
+| ASensI | Anxiety Sensitivity Index | Anxiety |
+| DAS | Dimensional Apathy Scale | Apathy |
+| SHAPS | Snaith-Hamilton Pleasure Scales | Apathy |
+| TEPS | Temporal Experience of Pleasure Scale | Apathy |
+| QUIP-C | Questionnaire for Impulsive-Compulsive Disorders in Parkinson's Disease | Impulse Control Disorders |
+| AIS | Athens Insomnia Scale | Sleep |
+| MSQ | Mayo Sleep Questionnaire | Sleep |
+| SDQ | Sleep Disorders Questionnaire | Sleep |
+| CAPE-P15 | Community Assessment of Psychic Experiences, Positive scale, 15-item version | Psychosis |
+| PQ-B | Prodromal Questionnaire, Brief version | Psychosis |
+| SCL-90 | Symptom Checklist-90 | Multi-category |
+| ASBPD | Ardouin Scale of Behavior in Parkinson's Disease | Multi-category |
+
 ## Results
 
 Cross validation results:
