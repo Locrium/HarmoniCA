@@ -30,7 +30,7 @@ import json
 import pandas as pd
 from pathlib import Path
 
-from harmonica import HarmoniCA
+from harmonica.harmonica import HarmoniCA
 
 DEFAULT_MODELS_DIR    = Path(__file__).parent / 'models'
 DEFAULT_INVENTORY     = Path(__file__).parent / 'inventory' / 'harmonized_inventory.csv'
