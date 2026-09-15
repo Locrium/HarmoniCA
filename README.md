@@ -12,31 +12,23 @@ This tool offers mapping of individual questionnaire items from multiple instrum
 
 ## How to use
 
+`pip install pyHarmoniCA`
 
-**Step 1:** Clone this repo: 
-
-`git clone git@github.com:julia-pfarr/HarmoniCA.git`
-
-**Step 2:** Install requirements:
-
-`python -m venv /your-path/harmonica`
-`pip install -r requirements.txt` 
-
-**Step 3:** Run harmonization:
+Run harmonization:
 
 ``` 
-python harmonize.py -i <items.csv> 
+harmonica [-h] --items <items.csv> [--output OUTPUT] [--force-rerun] [--models-dir MODELS_DIR] [--inventory INVENTORY] 
 ``` 
 
-This writes a results table to `<items>_harmonized.csv` (next to your input file), containing only the questionnaires you included in `items.csv`. Use `-o <path>` to choose a different output location.
+This writes a results table to `<items>_harmonized.csv` (next to your input file), containing the questionnaires you included in `items.csv`. Use `-o <path>` to choose a different output location.
 
 Your `items.csv` needs to look like this:
 ```
 construct,questionnaire,item_id,item_text
 depression,CES-D,CES-D_01,I was bothered by things that usually don’t bother me.
-depression,CES-D,CES-D_02,I did not feel like eating; my appetite was poor.
+depression,CES-D,CES-D_02,"I did not feel like eating; my appetite was poor."
 anxiety,DASS,DASS_02,I was aware of dryness of my mouth.,
-anxiety,DASS,DASS_04,"I experienced breathing difficulty",
+anxiety,DASS,DASS_04,I experienced breathing difficulty,
 ...
 ``` 
 
