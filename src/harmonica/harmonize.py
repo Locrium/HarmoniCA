@@ -8,6 +8,8 @@ python harmonize.py --items items.csv
 
 # items.csv must have columns: construct, questionnaire, item_id, item_text
 # Additional columns are ignored. Multiple questionnaires and constructs are supported.
+# Results are written to items_harmonized.csv (next to items.csv) unless --output is given,
+# and always contain only the questionnaires present in items.csv.
 
 # Programmatic use:
 from harmonica import HarmoniCA
@@ -43,7 +45,7 @@ def main():
     parser.add_argument('--items', '-i', required=True,
                         help='CSV file with columns: construct, questionnaire, item_id, item_text')
     parser.add_argument('--output', '-o', default=None,
-                        help='Output CSV path (default: print to stdout)')
+                        help='Output CSV path (default: <items>_harmonized.csv next to the input file)')
     parser.add_argument('--force-rerun', action='store_true',
                         help='Ignore inventory and always run the model')
     parser.add_argument('--models-dir', default=str(DEFAULT_MODELS_DIR))
@@ -77,11 +79,16 @@ def main():
 
     out_df = pd.concat(all_results, ignore_index=True)
 
-    if args.output:
-        out_df.to_csv(args.output, index=False)
-        print(f"Saved to {args.output}")
-    else:
-        print(out_df[['questionnaire', 'construct', 'item_id', 'dimension', 'dimension_label', 'confidence']].to_string(index=False))
+    preview_cols = ['questionnaire', 'construct', 'item_id', 'dimension', 'dimension_label', 'confidence']
+    print(out_df[preview_cols].to_string(index=False))
+
+    output_path = args.output
+    if output_path is None:
+        items_path = Path(args.items)
+        output_path = items_path.with_name(f"{items_path.stem}_harmonized.csv")
+
+    out_df.to_csv(output_path, index=False)
+    print(f"\nSaved to {output_path}")
 
 
 
