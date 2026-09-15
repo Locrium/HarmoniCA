@@ -232,6 +232,40 @@ class HarmoniCA:
         ]].to_dict('records')
         return cached, missing_items
 
+    def _find_id_mismatch_candidates(
+        self,
+        questionnaire: str,
+        construct: str,
+        missing_items: List[Dict],
+    ) -> "list[tuple[Dict, pd.Series]]":
+        """
+        Among items with no item_id match, find those whose (normalized) text
+        matches an inventory item under a different item_id — a likely sign the
+        questionnaire is already in the inventory but coded differently.
+
+        Returns a list of (user_item, inventory_row) pairs. Pure lookup, no
+        side effects — used both by `_resolve_id_mismatches` (CLI/library, via
+        `confirm_match`) and by UIs that want to show candidates for review
+        before deciding.
+        """
+        sub = self.inventory[
+            (self.inventory['questionnaire'] == questionnaire) &
+            (self.inventory['construct'] == construct)
+        ]
+        if len(sub) == 0:
+            return []
+
+        text_to_row = {}
+        for _, row in sub.iterrows():
+            text_to_row.setdefault(_normalize_item_text(row['item_text']), row)
+
+        candidates = []
+        for it in missing_items:
+            inv_row = text_to_row.get(_normalize_item_text(it['item_text']))
+            if inv_row is not None:
+                candidates.append((it, inv_row))
+        return candidates
+
     def _resolve_id_mismatches(
         self,
         questionnaire: str,
@@ -241,29 +275,14 @@ class HarmoniCA:
         confirm_match: Callable[[Dict, Dict], bool],
     ) -> "tuple[List[Dict], List[Dict]]":
         """
-        For items with no item_id match, check whether their (normalized) text
-        matches an inventory item under a different item_id — a likely sign the
-        questionnaire is already in the inventory but coded differently. Ask
-        `confirm_match` whether to reuse that assignment.
+        Ask `confirm_match` whether to reuse the inventory's assignment for each
+        item found by `_find_id_mismatch_candidates`.
         """
-        sub = self.inventory[
-            (self.inventory['questionnaire'] == questionnaire) &
-            (self.inventory['construct'] == construct)
-        ]
-        if len(sub) == 0:
-            return cached, missing_items
+        candidates = self._find_id_mismatch_candidates(questionnaire, construct, missing_items)
+        candidate_ids = {it['item_id'] for it, _ in candidates}
+        still_missing = [it for it in missing_items if it['item_id'] not in candidate_ids]
 
-        text_to_row = {}
-        for _, row in sub.iterrows():
-            text_to_row.setdefault(_normalize_item_text(row['item_text']), row)
-
-        still_missing = []
-        for it in missing_items:
-            inv_row = text_to_row.get(_normalize_item_text(it['item_text']))
-            if inv_row is None:
-                still_missing.append(it)
-                continue
-
+        for it, inv_row in candidates:
             if confirm_match(it, inv_row):
                 print(f"[HarmoniCA] Reusing inventory assignment for '{it['item_id']}' "
                       f"(matched by text to '{inv_row['item_id']}').")
