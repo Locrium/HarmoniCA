@@ -8,14 +8,27 @@ Workflow:
 """
 
 import json
+import re
 import contextlib
 import numpy as np
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict
+from typing import Callable, List, Dict, Optional
 
 from .config import BEST_MODEL, KNN_K, KNN_ALPHA, BASE_MODEL_NAMES, DIMENSION_DESCRIPTIONS, HF_REPOS
+
+
+# ---------------------------------------------------------------------------
+# Item-text normalisation, used to detect the same item under a different
+# item_id coding (e.g. 'PHQ9_1' vs the inventory's 'PHQ-9_01').
+# ---------------------------------------------------------------------------
+
+def _normalize_item_text(text) -> str:
+    text = str(text).strip().lower()
+    text = re.sub(r'\s+', ' ', text)
+    text = text.strip(' .?!"\'')
+    return text
 
 
 # ---------------------------------------------------------------------------
@@ -102,6 +115,7 @@ class HarmoniCA:
         construct: str,
         items: List[Dict],
         force_rerun: bool = False,
+        confirm_match: Optional[Callable[[Dict, Dict], bool]] = None,
     ) -> Dict:
         """
         Assign items from a questionnaire to construct dimensions.
@@ -113,13 +127,20 @@ class HarmoniCA:
                         'sleep', 'impulse_control'
         items         : list of dicts with keys 'item_id' and 'item_text'
         force_rerun   : skip inventory lookup and always run the model
+        confirm_match : called as `confirm_match(user_item, inventory_row)` when an
+                        item's text matches an inventory item under a *different*
+                        item_id (e.g. 'PHQ9_1' vs the inventory's 'PHQ-9_01').
+                        Return True to reuse the inventory's assignment, False to
+                        treat it as a new item and run the model. Defaults to an
+                        interactive y/n prompt on the terminal; pass your own
+                        callable for non-interactive / programmatic use.
 
         Returns
         -------
         dict with keys:
           'assignments' : list of dicts (item_id, item_text, dimension,
                           dimension_label, confidence)
-          'source'      : 'inventory' or 'model'
+          'source'      : 'inventory', 'model', or 'mixed'
           'questionnaire': questionnaire name
           'construct'   : construct name
         """
@@ -135,6 +156,11 @@ class HarmoniCA:
             cached, missing_items = [], items
         else:
             cached, missing_items = self._check_inventory(questionnaire, construct, items)
+            if missing_items:
+                cached, missing_items = self._resolve_id_mismatches(
+                    questionnaire, construct, cached, missing_items,
+                    confirm_match or self._default_confirm_match,
+                )
 
         if not missing_items:
             return {
@@ -205,6 +231,66 @@ class HarmoniCA:
             'item_id', 'item_text', 'dimension', 'dimension_label', 'confidence'
         ]].to_dict('records')
         return cached, missing_items
+
+    def _resolve_id_mismatches(
+        self,
+        questionnaire: str,
+        construct: str,
+        cached: List[Dict],
+        missing_items: List[Dict],
+        confirm_match: Callable[[Dict, Dict], bool],
+    ) -> "tuple[List[Dict], List[Dict]]":
+        """
+        For items with no item_id match, check whether their (normalized) text
+        matches an inventory item under a different item_id — a likely sign the
+        questionnaire is already in the inventory but coded differently. Ask
+        `confirm_match` whether to reuse that assignment.
+        """
+        sub = self.inventory[
+            (self.inventory['questionnaire'] == questionnaire) &
+            (self.inventory['construct'] == construct)
+        ]
+        if len(sub) == 0:
+            return cached, missing_items
+
+        text_to_row = {}
+        for _, row in sub.iterrows():
+            text_to_row.setdefault(_normalize_item_text(row['item_text']), row)
+
+        still_missing = []
+        for it in missing_items:
+            inv_row = text_to_row.get(_normalize_item_text(it['item_text']))
+            if inv_row is None:
+                still_missing.append(it)
+                continue
+
+            if confirm_match(it, inv_row):
+                print(f"[HarmoniCA] Reusing inventory assignment for '{it['item_id']}' "
+                      f"(matched by text to '{inv_row['item_id']}').")
+                cached.append({
+                    'item_id':        it['item_id'],
+                    'item_text':      it['item_text'],
+                    'dimension':      int(inv_row['dimension']),
+                    'dimension_label':inv_row['dimension_label'],
+                    'confidence':     float(inv_row['confidence']),
+                })
+            else:
+                print(f"[HarmoniCA] Treating '{it['item_id']}' as a new item.")
+                still_missing.append(it)
+
+        return cached, still_missing
+
+    @staticmethod
+    def _default_confirm_match(user_item: Dict, inv_row: Dict) -> bool:
+        prompt = (
+            f"\n[HarmoniCA] Item '{user_item['item_id']}' ({user_item['item_text']!r}) "
+            f"looks identical to inventory item '{inv_row['item_id']}' "
+            f"({inv_row['item_text']!r}), already assigned to dimension "
+            f"{inv_row['dimension']} ({inv_row['dimension_label']}).\n"
+            f"Did you mean this item? Reuse its assignment instead of re-running the model? [y/N]: "
+        )
+        answer = input(prompt).strip().lower()
+        return answer in ('y', 'yes')
 
     def _update_inventory(
         self,

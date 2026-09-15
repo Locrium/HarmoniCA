@@ -10,6 +10,10 @@ python harmonize.py --items items.csv
 # Additional columns are ignored. Multiple questionnaires and constructs are supported.
 # Results are written to items_harmonized.csv (next to items.csv) unless --output is given,
 # and always contain only the questionnaires present in items.csv.
+# If an item's text matches an inventory item already assigned under a different
+# item_id (e.g. your 'PHQ9_1' vs the inventory's 'PHQ-9_01'), you'll be prompted
+# on the terminal to confirm whether it's the same item before its cached
+# assignment is reused.
 
 # Programmatic use:
 from harmonica import HarmoniCA
