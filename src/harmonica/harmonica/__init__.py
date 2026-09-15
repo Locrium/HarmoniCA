@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 from .config import BEST_MODEL, KNN_K, KNN_ALPHA, BASE_MODEL_NAMES, DIMENSION_DESCRIPTIONS, HF_REPOS
 
@@ -129,27 +129,36 @@ class HarmoniCA:
                 f"Supported: {list(BEST_MODEL.keys())}"
             )
 
-        # 1. Check inventory
-        if not force_rerun:
-            cached = self._check_inventory(questionnaire, construct, items)
-            if cached is not None:
-                return {
-                    'assignments':  cached,
-                    'source':       'inventory',
-                    'questionnaire': questionnaire,
-                    'construct':    construct,
-                }
+        # 1. Check inventory — reuse whatever is already cached, only run the
+        #    model for items that are missing.
+        if force_rerun:
+            cached, missing_items = [], items
+        else:
+            cached, missing_items = self._check_inventory(questionnaire, construct, items)
 
-        # 2. Run model
-        print(f"[HarmoniCA] '{questionnaire}' not in inventory — running model for {construct}...")
-        assignments = self._run_model(construct, items)
+        if not missing_items:
+            return {
+                'assignments':  cached,
+                'source':       'inventory',
+                'questionnaire': questionnaire,
+                'construct':    construct,
+            }
 
-        # 3. Update inventory
-        self._update_inventory(questionnaire, construct, assignments)
+        # 2. Run model on the missing items only
+        print(f"[HarmoniCA] Running model for {len(missing_items)} item(s) of "
+              f"'{questionnaire}' ({construct})...")
+        new_assignments = self._run_model(construct, missing_items)
+
+        # 3. Update inventory with the newly predicted items
+        self._update_inventory(questionnaire, construct, new_assignments)
+
+        # 4. Merge cached + newly predicted assignments, preserving input order
+        order = {it['item_id']: i for i, it in enumerate(items)}
+        assignments = sorted(cached + new_assignments, key=lambda a: order[a['item_id']])
 
         return {
             'assignments':  assignments,
-            'source':       'model',
+            'source':       'model' if not cached else 'mixed',
             'questionnaire': questionnaire,
             'construct':    construct,
         }
@@ -163,26 +172,39 @@ class HarmoniCA:
         questionnaire: str,
         construct: str,
         items: List[Dict],
-    ) -> Optional[List[Dict]]:
+    ) -> "tuple[List[Dict], List[Dict]]":
+        """
+        Split `items` into those already assigned in the inventory and those
+        that still need to be run through the model.
+
+        Returns
+        -------
+        (cached_assignments, missing_items)
+        """
         sub = self.inventory[
             (self.inventory['questionnaire'] == questionnaire) &
             (self.inventory['construct'] == construct)
         ]
         if len(sub) == 0:
-            return None
+            return [], items
 
-        # Match on item_id
-        item_ids = {it['item_id'] for it in items}
-        matched  = sub[sub['item_id'].isin(item_ids)]
-        if len(matched) < len(items):
-            print(f"[HarmoniCA] Partial inventory match for '{questionnaire}' "
-                  f"({len(matched)}/{len(items)} items). Running model for new items.")
-            return None
+        # Match on item_id (dedupe in case the inventory has repeat rows)
+        matched = sub.drop_duplicates(subset='item_id', keep='last')
+        matched = matched[matched['item_id'].isin({it['item_id'] for it in items})]
+        matched_ids = set(matched['item_id'])
+        missing_items = [it for it in items if it['item_id'] not in matched_ids]
 
-        print(f"[HarmoniCA] '{questionnaire}' found in inventory ({len(matched)} items).")
-        return matched[[
+        if missing_items:
+            print(f"[HarmoniCA] '{questionnaire}' partially found in inventory "
+                  f"({len(matched)}/{len(items)} items). Running model for "
+                  f"{len(missing_items)} new item(s).")
+        else:
+            print(f"[HarmoniCA] '{questionnaire}' found in inventory ({len(matched)} items).")
+
+        cached = matched[[
             'item_id', 'item_text', 'dimension', 'dimension_label', 'confidence'
         ]].to_dict('records')
+        return cached, missing_items
 
     def _update_inventory(
         self,

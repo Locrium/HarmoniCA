@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  fast:
+    name: Fast tests (mocked model, lightweight deps)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install lightweight test dependencies
+        run: pip install pandas numpy pytest
+
+      - name: Run tests
+        run: pytest tests/ -v
+
+  full-install:
+    name: Full project install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install package with all production dependencies
+        run: pip install -e . pytest
+
+      - name: Run tests
+        run: pytest tests/ -v

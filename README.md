@@ -28,6 +28,8 @@ This tool offers mapping of individual questionnaire items from multiple instrum
 python harmonize.py -i <items.csv> 
 ``` 
 
+This writes a results table to `<items>_harmonized.csv` (next to your input file), containing only the questionnaires you included in `items.csv`. Use `-o <path>` to choose a different output location.
+
 Your `items.csv` needs to look like this:
 ```
 construct,questionnaire,item_id,item_text
