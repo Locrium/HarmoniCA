@@ -1,15 +1,9 @@
----
-title: HarmoniCA
-emoji: 🧠
-colorFrom: blue
-colorTo: indigo
-sdk: gradio
-sdk_version: 6.27.0
-app_file: app.py
-pinned: false
----
-
 # HarmoniCA - Harmonizing Clinical Assessments
+
+[![PyPI](https://img.shields.io/pypi/v/pyHarmoniCA)](https://pypi.org/project/pyHarmoniCA/)
+[![Python versions](https://img.shields.io/pypi/pyversions/pyHarmoniCA)](https://pypi.org/project/pyHarmoniCA/)
+[![Tests](https://github.com/julia-pfarr/HarmoniCA/actions/workflows/tests.yml/badge.svg)](https://github.com/julia-pfarr/HarmoniCA/actions/workflows/tests.yml)
+[![License: CC BY-NC 4.0](https://img.shields.io/github/license/julia-pfarr/HarmoniCA)](LICENSE)
 
 ## Background
 
