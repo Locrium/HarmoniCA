@@ -32,6 +32,108 @@ REVIEW_COLUMNS = [
 
 RESULT_COLUMNS = ['questionnaire', 'construct', 'item_id', 'dimension', 'dimension_label', 'confidence', 'source']
 
+# ---------------------------------------------------------------------------
+# Theme (colours and font from the Figma template)
+# ---------------------------------------------------------------------------
+# In Gradio 6 the theme is passed to .launch(), not gr.Blocks(), so it's defined
+# once here and used by both main() below and the root-level app.py.
+
+HARMONICA_RED = gr.themes.Color(
+    name="harmonica_red",
+    c50="#FBF3F5",
+    c100="#F9ECEF",  # light pink panels
+    c200="#F0CBD6",
+    c300="#E3A3B7",
+    c400="#CF7090",
+    c500="#B84B6F",
+    c600="#A33B5C",  # main brand red
+    c700="#872F4C",
+    c800="#6E2840",
+    c900="#5C2437",
+    c950="#36121E",
+)
+
+THEME = gr.themes.Default(
+    primary_hue=HARMONICA_RED,
+    neutral_hue=gr.themes.colors.gray,
+    font=[gr.themes.GoogleFont("Inter"), "ui-sans-serif", "system-ui", "sans-serif"],
+    font_mono=[gr.themes.GoogleFont("JetBrains Mono"), "ui-monospace", "monospace"],
+    radius_size=gr.themes.sizes.radius_md,
+).set(
+    body_background_fill="#F6F7F9",
+    body_text_color="#1F2430",
+    block_background_fill="white",
+    block_border_color="#E5E7EB",
+    button_primary_background_fill="*primary_600",
+    button_primary_background_fill_hover="*primary_700",
+    button_primary_text_color="white",
+    checkbox_background_color_selected="*primary_600",
+)
+
+# ---------------------------------------------------------------------------
+# Header
+# ---------------------------------------------------------------------------
+
+DOCS_URL = "https://github.com/julia-pfarr/HarmoniCA#readme"
+# Link to the research dashboard; the header link stays hidden until this is set.
+RESEARCH_WORKSPACE_URL = None
+
+_LOGO_SVG = (
+    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="1.6" stroke-linejoin="round"><path d="M12 3 3 7.5l9 4.5 9-4.5L12 3Z"/>'
+    '<path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg>'
+)
+_FLASK_SVG = (
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
+    '<path d="M9 3h6M10 3v6L4.5 19A1.5 1.5 0 0 0 5.8 21h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/>'
+    '<path d="M7.5 15h9"/></svg>'
+)
+
+
+def header_html() -> str:
+    workspace_link = (
+        f'<a href="{RESEARCH_WORKSPACE_URL}" target="_blank">{_FLASK_SVG} Research workspace</a>'
+        if RESEARCH_WORKSPACE_URL else ''
+    )
+    return f"""
+    <div class="hca-header">
+      <div class="hca-brand">
+        <div class="hca-logo">{_LOGO_SVG}</div>
+        <div>
+          <div class="hca-title">HarmoniCA</div>
+          <div class="hca-subtitle">Harmonizing Clinical Assessments</div>
+        </div>
+      </div>
+      <nav class="hca-links">
+        <a href="{DOCS_URL}" target="_blank">Documentation &#8599;</a>
+        {workspace_link}
+      </nav>
+    </div>
+    """
+
+
+# Like the theme, custom CSS is passed to .launch() in Gradio 6.
+CSS = """
+.hca-header { display: flex; align-items: center; justify-content: space-between;
+              gap: 16px; flex-wrap: wrap; padding: 8px 0 12px; }
+.hca-brand { display: flex; align-items: center; gap: 12px; }
+.hca-logo { width: 38px; height: 38px; border-radius: 8px; display: grid; place-items: center;
+            background: #F9ECEF; color: #A33B5C; }
+.hca-title { font-size: 24px; line-height: 1.1; color: #1F2430; }
+.hca-subtitle { font-size: 12px; color: #6B7280; }
+.hca-links { display: flex; gap: 28px; font-size: 14px; }
+.hca-links a { color: #4B5563; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.hca-links a:hover { color: #A33B5C; }
+
+/* Main tabs styled as the header navigation */
+#hca-tabs > .tab-wrapper { border-bottom: 1px solid #E5E7EB; }
+#hca-tabs [role="tab"] { font-size: 15px; color: #4B5563; border: none; background: none;
+                         border-bottom: 2px solid transparent; border-radius: 0; padding: 10px 4px;
+                         margin-right: 24px; }
+#hca-tabs [role="tab"][aria-selected="true"] { color: #A33B5C; border-bottom-color: #A33B5C; }
+"""
+
 _hca = None
 
 
@@ -164,75 +266,76 @@ def browse_inventory(construct_filter, questionnaire_filter, text_filter):
 
 def build_app() -> gr.Blocks:
     with gr.Blocks(title="HarmoniCA") as demo:
-        gr.Markdown("# HarmoniCA — Harmonizing Clinical Assessments")
+        gr.HTML(header_html())
 
-        with gr.Tab("Harmonize"):
-            gr.Markdown(
-                "Upload a CSV with columns `construct, questionnaire, item_id, item_text`."
-            )
-            items_file = gr.File(label="Items CSV", file_types=[".csv"])
-            force_rerun = gr.Checkbox(label="Ignore inventory and always run the model", value=False)
-            detect_btn = gr.Button("1. Check inventory")
-
-            summary_box = gr.Textbox(label="Summary", interactive=False)
-
-            with gr.Group(visible=False) as review_group:
+        with gr.Tabs(elem_id="hca-tabs"):
+            with gr.Tab("Harmonize"):
                 gr.Markdown(
-                    "These items have the *same text* as an inventory item, but a "
-                    "*different* item_id. Uncheck any that are actually a different item."
+                    "Upload a CSV with columns `construct, questionnaire, item_id, item_text`."
                 )
-                review_df = gr.Dataframe(
-                    headers=REVIEW_COLUMNS,
-                    datatype=["str", "str", "str", "str", "str", "str", "bool"],
-                    interactive=True,
-                    label="Possible duplicates",
+                items_file = gr.File(label="Items CSV", file_types=[".csv"])
+                force_rerun = gr.Checkbox(label="Ignore inventory and always run the model", value=False)
+                detect_btn = gr.Button("1. Check inventory")
+
+                summary_box = gr.Textbox(label="Summary", interactive=False)
+
+                with gr.Group(visible=False) as review_group:
+                    gr.Markdown(
+                        "These items have the *same text* as an inventory item, but a "
+                        "*different* item_id. Uncheck any that are actually a different item."
+                    )
+                    review_df = gr.Dataframe(
+                        headers=REVIEW_COLUMNS,
+                        datatype=["str", "str", "str", "str", "str", "str", "bool"],
+                        interactive=True,
+                        label="Possible duplicates",
+                    )
+
+                run_btn = gr.Button("2. Run harmonization", interactive=False)
+
+                results_df = gr.Dataframe(label="Results", interactive=False)
+                download_file = gr.File(label="Download harmonized CSV")
+
+                state = gr.State()
+
+                detect_btn.click(
+                    fn=detect,
+                    inputs=[items_file],
+                    outputs=[state, summary_box, review_df, review_group, run_btn],
+                )
+                run_btn.click(
+                    fn=run_harmonization,
+                    inputs=[state, review_df, force_rerun],
+                    outputs=[results_df, download_file],
                 )
 
-            run_btn = gr.Button("2. Run harmonization", interactive=False)
+            with gr.Tab("Inventory Browser"):
+                with gr.Row():
+                    construct_dropdown = gr.Dropdown(
+                        choices=['All'] + CONSTRUCTS, value='All', label="Construct"
+                    )
+                    questionnaire_search = gr.Textbox(label="Questionnaire contains")
+                    text_search = gr.Textbox(label="Item text contains")
+                refresh_btn = gr.Button("Search")
+                count_box = gr.Textbox(label="Matches", interactive=False)
+                inventory_df = gr.Dataframe(label="Inventory", interactive=False)
 
-            results_df = gr.Dataframe(label="Results", interactive=False)
-            download_file = gr.File(label="Download harmonized CSV")
-
-            state = gr.State()
-
-            detect_btn.click(
-                fn=detect,
-                inputs=[items_file],
-                outputs=[state, summary_box, review_df, review_group, run_btn],
-            )
-            run_btn.click(
-                fn=run_harmonization,
-                inputs=[state, review_df, force_rerun],
-                outputs=[results_df, download_file],
-            )
-
-        with gr.Tab("Inventory Browser"):
-            with gr.Row():
-                construct_dropdown = gr.Dropdown(
-                    choices=['All'] + CONSTRUCTS, value='All', label="Construct"
+                refresh_btn.click(
+                    fn=browse_inventory,
+                    inputs=[construct_dropdown, questionnaire_search, text_search],
+                    outputs=[inventory_df, count_box],
                 )
-                questionnaire_search = gr.Textbox(label="Questionnaire contains")
-                text_search = gr.Textbox(label="Item text contains")
-            refresh_btn = gr.Button("Search")
-            count_box = gr.Textbox(label="Matches", interactive=False)
-            inventory_df = gr.Dataframe(label="Inventory", interactive=False)
-
-            refresh_btn.click(
-                fn=browse_inventory,
-                inputs=[construct_dropdown, questionnaire_search, text_search],
-                outputs=[inventory_df, count_box],
-            )
-            demo.load(
-                fn=browse_inventory,
-                inputs=[construct_dropdown, questionnaire_search, text_search],
-                outputs=[inventory_df, count_box],
-            )
+                demo.load(
+                    fn=browse_inventory,
+                    inputs=[construct_dropdown, questionnaire_search, text_search],
+                    outputs=[inventory_df, count_box],
+                )
 
     return demo
 
 
 def main():
-    build_app().launch()
+    build_app().launch(theme=THEME, css=CSS)
 
 
 if __name__ == '__main__':
