@@ -1,3 +1,14 @@
+---
+title: HarmoniCA
+emoji: 🧠
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+sdk_version: 6.27.0
+app_file: app.py
+pinned: false
+---
+
 # HarmoniCA - Harmonizing Clinical Assessments
 
 [![PyPI](https://img.shields.io/pypi/v/pyHarmoniCA)](https://pypi.org/project/pyHarmoniCA/)
