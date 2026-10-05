@@ -24,6 +24,14 @@ from .config import BEST_MODEL, KNN_K, KNN_ALPHA, BASE_MODEL_NAMES, DIMENSION_DE
 # item_id coding (e.g. 'PHQ9_1' vs the inventory's 'PHQ-9_01').
 # ---------------------------------------------------------------------------
 
+def _auto_device() -> str:
+    try:
+        import torch
+        return 'cuda' if torch.cuda.is_available() else 'cpu'
+    except ImportError:
+        return 'cpu'
+
+
 def _normalize_item_text(text) -> str:
     text = str(text).strip().lower()
     text = re.sub(r'\s+', ' ', text)
@@ -97,12 +105,15 @@ class HarmoniCA:
     ----------
     models_dir : path to the models/ directory (contains one subfolder per construct)
     inventory_path : path to harmonized_inventory.csv
+    device : 'cuda' or 'cpu' for the fine-tuned models. Defaults to 'cuda' if a
+             GPU is available, else 'cpu'.
     """
 
-    def __init__(self, models_dir: str, inventory_path: str):
+    def __init__(self, models_dir: str, inventory_path: str, device: Optional[str] = None):
         self.models_dir     = Path(models_dir)
         self.inventory_path = Path(inventory_path)
         self.inventory      = pd.read_csv(inventory_path)
+        self.device         = device or _auto_device()
         self._loaded_models: Dict = {}
 
     # ------------------------------------------------------------------
@@ -405,7 +416,7 @@ class HarmoniCA:
             )
 
         with _fix_tokenizer_config(encoder_dir):
-            model = model_class.load(str(model_path), device='cpu')
+            model = model_class.load(str(model_path), device=self.device)
 
         self._loaded_models[construct] = model
         return model
@@ -487,7 +498,7 @@ class HarmoniCA:
         dim_ids    = sorted(dim_defs.keys())
         dim_labels = {d: dim_defs[d]['label'] for d in dim_ids}
 
-        model = SentenceTransformer(base_model_name)
+        model = SentenceTransformer(base_model_name, device=self.device)
 
         item_embs = model.encode(item_texts, convert_to_numpy=True, show_progress_bar=False)
         item_embs = item_embs / (np.linalg.norm(item_embs, axis=1, keepdims=True) + 1e-10)

@@ -54,6 +54,8 @@ def main():
                         help='Ignore inventory and always run the model')
     parser.add_argument('--models-dir', default=str(DEFAULT_MODELS_DIR))
     parser.add_argument('--inventory', default=str(DEFAULT_INVENTORY))
+    parser.add_argument('--device', default=None, choices=['cpu', 'cuda'],
+                        help='Device for the fine-tuned models (default: cuda if available, else cpu)')
 
     args = parser.parse_args()
 
@@ -65,7 +67,7 @@ def main():
         raise ValueError(f"Items CSV is missing required columns: {missing}")
 
     # Run per (construct, questionnaire) group
-    hca = HarmoniCA(models_dir=args.models_dir, inventory_path=args.inventory)
+    hca = HarmoniCA(models_dir=args.models_dir, inventory_path=args.inventory, device=args.device)
     all_results = []
     for (construct, questionnaire), group in items_df.groupby(['construct', 'questionnaire']):
         items = group[['item_id', 'item_text']].to_dict('records')
